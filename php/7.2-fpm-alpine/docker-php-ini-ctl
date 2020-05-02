@@ -1,0 +1,65 @@
+#!/bin/sh
+set -e
+
+cd "$PHP_INI_DIR/conf.d"
+
+usage() {
+  echo "Usage: docker-php-ini-ctl COMMAND INI-FILE-NAME [INI-FILE-NAME...]"
+  printf '\nCommands:\n'
+  printf '  enable:\tEnable ini file(s)\n'
+  printf '  disable:\tDisable ini file(s)\n'
+  printf '\nExamples:\n'
+  echo "  docker-php-ini-ctl enable docker-php-ext-xdebug 00-ioncube"
+  echo "  docker-php-ini-ctl disable docker-php-ext-opcache"
+}
+
+command="$1"
+shift
+case "$command" in
+  --help|-h|'-?') usage && exit 0 ;;
+  enable|disable) ;;
+  *)
+    {
+      echo "error: unknown command: $command"
+      usage
+    } >&2
+    exit 1
+    ;;
+esac
+
+ini_files=
+for ini_file; do
+  if [ -z "$ini_file" ]; then
+    continue
+  fi
+  if [ -f "$ini_file.ini" ] || [ -f "$ini_file.ini-disabled" ]; then
+    ini_files="$ini_files $ini_file"
+  else
+    echo >&2 "error: '$ini_file' does not exist"
+    echo >&2
+    usage >&2
+    exit 1
+  fi
+done
+
+if [ -z "$ini_files" ]; then
+  echo >&2 "error: no ini files specified"
+  echo >&2
+  usage >&2
+  exit 1
+fi
+
+for ini_file in $ini_files; do
+  case "$command" in
+    enable)
+      if [ -f "$ini_file.ini-disabled" ]; then
+        mv "$ini_file.ini-disabled" "$ini_file.ini"
+      fi
+      ;;
+    disable)
+      if [ -f "$ini_file.ini" ]; then
+        mv "$ini_file.ini" "$ini_file.ini-disabled"
+      fi
+      ;;
+  esac
+done

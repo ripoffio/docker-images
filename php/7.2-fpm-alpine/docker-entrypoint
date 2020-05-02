@@ -1,0 +1,54 @@
+#!/bin/sh
+set -e
+
+entry_log() {
+  type="$1"; shift
+  printf '%s [%s] [Entrypoint]: %s\n' "$(date -Iseconds)" "$type" "$*"
+}
+
+entry_log Note "Entrypoint script for PHP FPM Server ${PHP_VERSION} started."
+
+# Disable OPcache (enabled by default)
+if [ "$PHP_OPCACHE_DISABLE" = "1" ]; then
+  docker-php-ini-ctl disable docker-php-ext-opcache
+  entry_log Note "Extension: opcache - disabled."
+else
+  docker-php-ini-ctl enable docker-php-ext-opcache
+  entry_log Note "Extension: opcache - enabled."
+fi
+
+# Enable Xdebug (disabled by default)
+if [ "$PHP_XDEBUG_ENABLE" = "1" ]; then
+  docker-php-ini-ctl enable docker-php-ext-xdebug
+  entry_log Note "Extension: xdebug - enabled."
+else
+  docker-php-ini-ctl disable docker-php-ext-xdebug
+  entry_log Note "Extension: xdebug - disabled."
+fi
+
+# Enable ionCube (disabled by default)
+if [ "$PHP_IONCUBE_ENABLE" = "1" ]; then
+  docker-php-ini-ctl enable 00-ioncube
+  entry_log Note "Extension: ioncube - enabled."
+else
+  docker-php-ini-ctl disable 00-ioncube
+  entry_log Note "Extension: ioncube - disabled."
+fi
+
+# Replace ImageMagick with GraphicsMagick (GraphicsMagick is disabled by default)
+if [ "$PHP_GMAGICK_ENABLE" = "1" ]; then
+  docker-php-ini-ctl disable docker-php-ext-imagick
+  docker-php-ini-ctl enable docker-php-ext-gmagick
+  entry_log Note "Extension: imagick replaced with gmagick."
+else
+  docker-php-ini-ctl enable docker-php-ext-imagick
+  docker-php-ini-ctl disable docker-php-ext-gmagick
+  entry_log Note "Extension: imagick used instead of gmagick."
+fi
+
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+	set -- php-fpm "$@"
+fi
+
+exec "$@"
