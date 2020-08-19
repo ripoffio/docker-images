@@ -4,6 +4,7 @@
 
 # Supported tags and respective `Dockerfile` links
 
+- [5.6-fpm-alpine](https://github.com/ripoffio/docker-images/blob/master/php/5.6-fpm-alpine/Dockerfile)
 - [7.2-fpm-alpine](https://github.com/ripoffio/docker-images/blob/master/php/7.2-fpm-alpine/Dockerfile)
 
 # Quick reference (cont.)
